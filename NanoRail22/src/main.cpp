@@ -6,15 +6,16 @@
 #define HITlimit(x) (x == limitActive)
 #define HITkey(x) (x == keyActive)
 
-#define pinXmin pin_HeadA7
-#define pinXmax pin_HeadA6
+#define pinXmin pin_X_LIMIT
+#define pinXmax pin_X_LIMIT
 #define pinButMinus pin_key_Resume
 #define pinButPlus pin_key_Hold
 #define pinButMenu pin_key_Abort
 
-#define STEPXL -1     // direction of stepper to reach minlimit
-#define STEPXH 1      // direction of stepper to reach maxlimit
-#define STEPSpeed 250 // max speed for stepper
+#define STEPXL -1    // direction of stepper to reach minlimit
+#define STEPXH 1     // direction of stepper to reach maxlimit
+#define STEPSpeed 10 // predkosc rozpoczynajaca ruch
+#define STEPMAXSPEED  2000 //maksymalna predkosc silnika
 
 bool debugPinsState = false; // true anables printing pin value when changing
 
@@ -52,12 +53,12 @@ void setup()
   enablePullUp(pinButPlus);
   enablePullUp(pinButMenu);
 
-  StepperX.setEnablePin(pin_ENABLE);  
+  StepperX.setEnablePin(pin_ENABLE);
   StepperX.setPinsInverted(false, false, true); //(bool directionInvert, bool stepInvert, bool enableInvert
   StepperX.enableOutputs();
 
-  StepperX.setAcceleration(STEPSpeed / 4);
-  StepperX.setMaxSpeed(STEPSpeed);
+  StepperX.setAcceleration(STEPMAXSPEED/4);  //
+  StepperX.setMaxSpeed(STEPMAXSPEED);
   StepperX.setSpeed(0.0);
 
   Serial.print(F("\r\n...Start loop."));
@@ -81,7 +82,7 @@ void loop()
   {
     bool shouldStop = false;
     bool shouldMove = false;
-
+    // Limit max
     if (getNewPinState(pinXmax, &ValuePinXmax))
     {
       if (HITlimit(ValuePinXmax))
@@ -90,7 +91,7 @@ void loop()
         shouldStop = true;
       }
     }
-
+    // Limit min
     if (getNewPinState(pinXmin, &ValuePinXmin))
     {
       if (HITlimit(ValuePinXmin))
@@ -99,7 +100,7 @@ void loop()
         shouldStop = true;
       }
     }
-
+    // czy zmieniony stan przyciskow
     if (getNewPinState(pinButMinus, &ValuePinButMinus))
     {
       if (HITkey(ValuePinButMinus))
@@ -111,6 +112,11 @@ void loop()
       {
         shouldStop = true;
       }
+    }
+    else if (HITkey(ValuePinButMinus)) // wcisniety przycisk
+    {
+      carrSPEEDx10 = carrSPEEDx10 + (100 * STEPXL);
+      shouldMove = true;
     }
 
     if (getNewPinState(pinButPlus, &ValuePinButPlus))
@@ -125,6 +131,11 @@ void loop()
         shouldStop = true;
       }
     }
+    else if (HITkey(ValuePinButPlus)) // wcisniety przycisk
+    {
+      carrSPEEDx10 = carrSPEEDx10 + (100 * STEPXH);
+      shouldMove = true;
+    }
 
     if (getNewPinState(pinButMenu, &ValuePinButMenu))
     {
@@ -134,33 +145,35 @@ void loop()
       }
     }
 
+    if (carrSPEEDx10 > STEPMAXSPEED*10)
+      carrSPEEDx10 = STEPMAXSPEED*10;
+    if (carrSPEEDx10 < -STEPMAXSPEED*10)
+      carrSPEEDx10 = -STEPMAXSPEED*10;
+
     if (shouldStop)
     {
       if (!isIdle)
       {
-        StepperX.stop();
+        Serial.print(F("\tStop Motor with speed: "));
+        Serial.print(StepperX.speed());
+        //StepperX.stop();
         StepperX.setSpeed(0.0);
         isIdle = true;
         idleStepperTimeout = millis() + STEPPER_TIMEOUTms;
         carrSPEEDx10 = 0;
-        Serial.print(F("\tStop Motor."));
       }
     }
-    else
+    else if (shouldMove)
     {
-      if (shouldMove)
-      {
-        if (StepperX.speed() != (carrSPEEDx10 / 10))
+        float ns = carrSPEEDx10 / 10;
+        if (StepperX.speed() != ns)
         {
           StepperX.setSpeed(carrSPEEDx10 / 10);
           isIdle = false;
           isStepperEnabled = true;
           StepperX.enableOutputs();
           idleStepperTimeout = UINT32_MAX;
-          Serial.print(F("\r\nStart Motor. With speed: "));
-          Serial.print(StepperX.speed());
         }
-      }
     }
 
     TimeoutPins = millis() + 10 + (isIdle * 100);

@@ -2,7 +2,7 @@
 #define NR22config_h
 #include <Arduino.h>
 #include <pins_arduino.h>
-#include <AccelStepper.h>
+//#include <AccelStepper.h>
 
 // Simpli use of keyes cnc shield for arduino nano v3
 // Shield with 3 stepper drivers A4988
@@ -15,14 +15,14 @@ https://www.keyestudio.com/products/keyestudio-cnc-shield-v40-board-for-arduino-
 
 #define pin_unused 0xFF
 
-#define pin_X_STEP  2
-#define pin_Y_STEP  3
-#define pin_Z_STEP  4
-#define pin_X_DIR   5
-#define pin_Y_DIR   6
-#define pin_Z_DIR   7
+#define pin_X_STEP  5   //oś x, sterowanie silnikiem krokowym 
+#define pin_Y_STEP  6
+#define pin_Z_STEP  7
+#define pin_X_DIR   2   //oś X, kontrola kierunku silnika krokowego
+#define pin_Y_DIR   3
+#define pin_Z_DIR   4
 
-#define pin_ENABLE  8  //common for 3 drivers
+#define pin_ENABLE  8  //common for 3 drivers, włączanie silnika krokowego, aktywny niski poziom
 
 #define pin_X_LIMIT 9  //common X+ and X-
 #define pin_Y_LIMIT 10 //common + -
