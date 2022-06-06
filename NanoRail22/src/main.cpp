@@ -52,7 +52,9 @@ void setup()
   enablePullUp(pinButPlus);
   enablePullUp(pinButMenu);
 
-  StepperX.setEnablePin(pin_ENABLE);
+  StepperX.setEnablePin(pin_ENABLE);  
+  StepperX.setPinsInverted(false, false, true); //(bool directionInvert, bool stepInvert, bool enableInvert
+  StepperX.enableOutputs();
 
   StepperX.setAcceleration(STEPSpeed / 4);
   StepperX.setMaxSpeed(STEPSpeed);
@@ -153,6 +155,7 @@ void loop()
           StepperX.setSpeed(carrSPEEDx10 / 10);
           isIdle = false;
           isStepperEnabled = true;
+          StepperX.enableOutputs();
           idleStepperTimeout = UINT32_MAX;
           Serial.print(F("\r\nStart Motor. With speed: "));
           Serial.print(StepperX.speed());
@@ -175,11 +178,11 @@ void loop()
 
 void enablePullUp(uint8_t pin)
 {
-  if (pin < A6)
+  /*if (pin < A6)
   {
     pinMode(pin, OUTPUT);
     digitalWrite(pin, 0);
-  }
+  }*/
   pinMode(pin, INPUT_PULLUP);
 }
 
